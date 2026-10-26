@@ -1,0 +1,14 @@
+all:
+  children:
+    adm:
+      hosts:
+        servera:
+          ansible_host: 172.16.10.101
+    srv:
+      hosts:    
+        serverb:
+          ansible_host: 172.16.10.102
+        serverc:
+          ansible_host: 172.16.10.103
+
+        

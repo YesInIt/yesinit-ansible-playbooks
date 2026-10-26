@@ -1,0 +1,6 @@
+---
+# Коллекции для плагинов инвентори из ansible.cfg.
+#   ansible-galaxy collection install -r requirements.yml
+collections:
+  - name: netbox.netbox   # nb_inventory, нужен pip-пакет pynetbox
+  - name: vmware.vmware   # vms, нужен pip-пакет pyvmomi

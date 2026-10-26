@@ -1,0 +1,68 @@
+---
+# Установка Docker CE + compose plugin (`docker compose`) по инструкции docs.docker.com/engine/install.
+# Только Debian-подобные (Debian/Ubuntu), на остальных хостах задачи пропускаются.
+#
+# ansible-playbook setup-docker-ce.yaml --limit <host> 
+
+
+- name: Setup Docker CE play
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    docker_release: "{{ ansible_facts.distribution_release }}"
+
+  tasks:
+    - name: Block setup Docker CE for Debian family
+      when: ansible_facts.os_family == 'Debian'
+      block:
+        # Удаление конфликтующих пакетов с docker-ce (список из официальной инструкции)
+        - name: Удаление конфликтующих пакетов c docker-ce
+          ansible.builtin.apt:
+            name:
+              - docker.io
+              - docker-doc
+              - docker-compose
+              - docker-compose-v2
+              - docker-buildx
+              - podman-docker
+              - containerd
+              - runc
+            state: absent
+
+        # python3-debian нужен модулю deb822_repository
+        - name: Проверка зависимостей для deb822_repository
+          ansible.builtin.apt:
+            name:
+              - ca-certificates
+              - python3-debian
+            state: present
+            update_cache: yes
+
+        # Ключ качает сам модуль на хосте: прокси для него — переменные окружения, не apt.conf.
+        - name: Репозиторий Docker
+          ansible.builtin.deb822_repository:
+            name: docker
+            uris: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}"
+            suites: "{{ docker_release }}"
+            components: stable
+            signed_by: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/gpg"
+          environment:
+            https_proxy: "{{ proxy_url | default('') }}"
+            no_proxy: "{{ no_proxy_list | default('') }}"
+
+        - name: Установка всех пакетов Docker CE и compose plugin
+          ansible.builtin.apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+            update_cache: yes
+
+        - name: Служба Docker запущена и в автозагрузке
+          ansible.builtin.systemd:
+            name: docker
+            enabled: yes
+            state: started
