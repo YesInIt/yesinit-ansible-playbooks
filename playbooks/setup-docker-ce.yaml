@@ -2,7 +2,8 @@
 # Установка Docker CE + compose plugin (`docker compose`) по инструкции docs.docker.com/engine/install.
 # Только Debian-подобные (Debian/Ubuntu), на остальных хостах задачи пропускаются.
 #
-# ansible-playbook setup-docker-ce.yaml --limit <host> 
+# ansible-playbook setup-docker-ce.yaml --limit <host> -u <user> -i inventory/<inventory>
+
 
 
 - name: Setup Docker CE play
@@ -11,10 +12,16 @@
   gather_facts: true
   vars:
     docker_release: "{{ ansible_facts.distribution_release }}"
+    # Прокси задаётся в inventory (group_vars/host_vars) или через -e, по умолчанию — без прокси:
+    #   proxy_url: "http://proxy.example.com:3128"   # или "http://user:pass@proxy.example.com:3128"
 
   tasks:
     - name: Block setup Docker CE for Debian family
       when: ansible_facts.os_family == 'Debian'
+      # Прокси для всего блока: и для скачивания GPG-ключа, и для apt
+      environment:
+        http_proxy: "{{ proxy_url | default('') }}"
+        https_proxy: "{{ proxy_url | default('') }}"
       block:
         # Удаление конфликтующих пакетов с docker-ce (список из официальной инструкции)
         - name: Удаление конфликтующих пакетов c docker-ce
@@ -39,7 +46,7 @@
             state: present
             update_cache: yes
 
-        # Ключ качает сам модуль на хосте: прокси для него — переменные окружения, не apt.conf.
+        # Ключ качает сам модуль на хосте, поэтому прокси для него — через environment блока
         - name: Репозиторий Docker
           ansible.builtin.deb822_repository:
             name: docker
@@ -47,9 +54,6 @@
             suites: "{{ docker_release }}"
             components: stable
             signed_by: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/gpg"
-          environment:
-            https_proxy: "{{ proxy_url | default('') }}"
-            no_proxy: "{{ no_proxy_list | default('') }}"
 
         - name: Установка всех пакетов Docker CE и compose plugin
           ansible.builtin.apt:
