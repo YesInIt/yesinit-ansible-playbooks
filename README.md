@@ -4,9 +4,9 @@
 
 ## Плейбуки
 
-| Плейбук | Что делает | Группа хостов | ОС |
-|---|---|---|---|
-| [setup-docker-ce.yaml](playbooks/setup-docker-ce.yaml) | Ставит Docker CE + compose/buildx из официального репозитория Docker | `all` | Debian, Ubuntu |
+| Плейбук | Что делает | Группа хостов | ОС | Запуск |
+|---|---|---|---|---|
+| [setup-docker-ce.yaml](playbooks/setup-docker-ce.yaml) | Ставит Docker CE + compose/buildx из официального репозитория Docker | `all` | Debian, Ubuntu | [варианты](#setup-docker-ce) |
 
 ## Структура
 
@@ -44,6 +44,31 @@
    ```
 
    Проверить без изменений: добавить `--check --diff`.
+
+## Варианты запуска
+
+<a id="setup-docker-ce"></a>
+### setup-docker-ce.yaml
+
+Быстрый запуск (без прокси):
+
+```bash
+ansible-playbook ./playbooks/setup-docker-ce.yaml --limit <host>
+```
+
+Расширенный запуск с указанием пользователя и инвентори:
+
+```bash
+ansible-playbook ./playbooks/setup-docker-ce.yaml --limit <host> -u <user> -i inventory/<inventory>
+```
+
+Расширенный запуск с прокси через `-e`:
+
+```bash
+ansible-playbook ./playbooks/setup-docker-ce.yaml --limit <host> -u <user> -i inventory/<inventory> -e proxy_url="http://<proxy>:3128"
+```
+
+Прокси (`proxy_url`) можно задать и в инвентори — в `group_vars`/`host_vars`.
 
 ## Лицензия
 
