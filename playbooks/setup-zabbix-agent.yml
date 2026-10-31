@@ -1,0 +1,29 @@
+---
+- name: Установка Zabbix Agent из коллекции community.zabbix
+  hosts: all
+  become: true
+  vars:
+    zabbix_agent_server: mon.yesinit.tech # поменяйте на ваш сервер Zabbix
+    zabbix_agent_version: "7.4" # поменяйте на вашу версию Zabbix
+    zabbix_agent_hostmetadata: "Linux" # поменяйте на вашу метку хоста в Zabbix и коды авторегистрации
+    # Прокси задаётся в inventory (group_vars/host_vars) или через -e, по умолчанию — системный прокси хоста (если есть):
+    #   proxy_url: "http://proxy.example.com:3128"   # или "http://user:pass@proxy.example.com:3128"
+  tasks:
+    - name: Run Zabbix agent role
+      ansible.builtin.include_role:
+        name: community.zabbix.zabbix_agent
+      vars:
+        zabbix_agent_serveractive: "{{ zabbix_agent_server }}"
+        zabbix_agent2: true
+        zabbix_agent_package_remove: true
+        zabbix_agent_package_state: latest
+        zabbix_http_proxy: "{{ proxy_url | default(ansible_env.http_proxy | default('')) }}"
+        zabbix_https_proxy: "{{ proxy_url | default(ansible_env.https_proxy | default('')) }}"
+        zabbix_agent_listenip: "{{ ansible_default_ipv4.address }}"
+        #zabbix_agent_tlspsk_auto: True
+        #zabbix_agent_tlsconnect: psk
+        #zabbix_agent_tlsaccept: psk
+        #zabbix_agent_tlspskidentity: 'CHANGE-ME-TO-YOUR-PSK-ID' # поменяйте на ваш PSK ID
+        #zabbix_agent_tlspsk_secret: 'CHANGE-ME-TO-YOUR-PSK-SECRET' # поменяйте на ваш PSK Secret
+        #zabbix_agent_tlspskfile: '/etc/zabbix/secret_agent.psk'
+        zabbix_agent_timeout: 20

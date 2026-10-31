@@ -4,3 +4,6 @@
 collections:
   - name: netbox.netbox   # nb_inventory, нужен pip-пакет pynetbox
   - name: vmware.vmware   # vms, нужен pip-пакет pyvmomi
+  - name: community.zabbix # для установки zabbix-agent
+    version: "4.2.0"
+

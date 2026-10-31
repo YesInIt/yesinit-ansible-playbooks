@@ -3,10 +3,10 @@
 # Только Debian-подобные (Debian/Ubuntu), на остальных хостах задачи пропускаются.
 #
 # Быстрый запуск (без прокси):
-#   ansible-playbook ./playbooks/setup-docker-ce.yaml --limit <host>
-# Расширенный запуск с указанием пользователя и инвентори:
+#   ansible-playbook ./playbooks/setup-docker-ce.yaml --limit <host> -u <user>
+# Расширенный запуск с указанием инвентори:
 #   ansible-playbook ./playbooks/setup-docker-ce.yaml --limit <host> -u <user> -i inventory/<inventory>
-# Расширеннвй запуск с прокси через -e:
+# Расширенный запуск с прокси через -e:
 #   ansible-playbook ./playbooks/setup-docker-ce.yaml --limit <host> -u <user> -i inventory/<inventory> -e proxy_url="http://<proxy>:3128"
 
 
@@ -18,16 +18,16 @@
   gather_facts: true
   vars:
     docker_release: "{{ ansible_facts.distribution_release }}"
-    # Прокси задаётся в inventory (group_vars/host_vars) или через -e, по умолчанию — без прокси:
+    # Прокси задаётся в inventory (group_vars/host_vars) или через -e, по умолчанию — системный прокси хоста (если есть):
     #   proxy_url: "http://proxy.example.com:3128"   # или "http://user:pass@proxy.example.com:3128"
 
   tasks:
     - name: Block setup Docker CE for Debian family
       when: ansible_facts.os_family == 'Debian'
-      # Прокси для всего блока: и для скачивания GPG-ключа, и для apt
+      # Прокси для всего блока: и для скачивания GPG-ключа, и для apt; без proxy_url — системный прокси хоста
       environment:
-        http_proxy: "{{ proxy_url | default('') }}"
-        https_proxy: "{{ proxy_url | default('') }}"
+        http_proxy: "{{ proxy_url | default(ansible_env.http_proxy | default('')) }}"
+        https_proxy: "{{ proxy_url | default(ansible_env.https_proxy | default('')) }}"
       block:
         # Удаление конфликтующих пакетов с docker-ce (список из официальной инструкции)
         - name: Удаление конфликтующих пакетов c docker-ce
